@@ -29,7 +29,7 @@ public class OrderService : IOrderService
             using var client = new HttpClient();
 
             // await client.PostAsync(url, data);
-            PrintConsole.Write($"Order {order.Id} with {order.Orders.Count} orders sent to glovo", ConsoleColor.Green);
+            PrintConsole.Write($"Group order {order.Id} with {order.Orders.Count} orders sent to glovo", ConsoleColor.Green);
         }
         catch (Exception e)
         {
@@ -57,7 +57,7 @@ public class OrderService : IOrderService
             using var client = new HttpClient();
 
             await client.PostAsync(url, data);
-            PrintConsole.Write($"Order {order.Id} with {order.Orders.Count} orders sent to client", ConsoleColor.Green);
+            PrintConsole.Write($"Group order {order.Id} with {order.Orders.Count} orders sent to client", ConsoleColor.Green);
         }
         catch (Exception e)
         {

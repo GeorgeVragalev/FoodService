@@ -1,4 +1,5 @@
-﻿using FoodService.Models;
+﻿using FoodService.FoodService;
+using FoodService.Models;
 using FoodService.Services.OrderService;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,19 +10,23 @@ namespace FoodService.Controllers;
 public class FoodServiceController : ControllerBase
 {
     private readonly IOrderService _orderService;
+    private readonly IGlovo _glovo;
 
-    public FoodServiceController(IOrderService orderService)
+    public FoodServiceController(IOrderService orderService, IGlovo glovo)
     {
         _orderService = orderService;
+        _glovo = glovo;
     }
 
     [HttpPost("/order")]
-    public async void TakeOrderFromClient([FromBody] GroupOrder order)
+    public async Task TakeOrderFromClient([FromBody] GroupOrder order)
     {
         Console.WriteLine($"Group Order {order.Id} received with {order.Orders.Count} orders from client {order.ClientId}");
         //send order to DiningHall
         //todo glovo send order to dedicated restaurant 
         await _orderService.AddOrdersToList(order);
+        
+        await _glovo.DistributeOrderToRestaurants(order);
         
         //prepare foods
         foreach (var o in order.Orders)
@@ -48,27 +53,29 @@ public class FoodServiceController : ControllerBase
         }
     }
     
-    // [HttpPost]
-    // public void ReceivePreparedOrder([FromBody] Order order)
-    // {
-    //     Console.WriteLine("Order "+ order.Id+" received");
-    //     //todo send order to client service 
-            //check if group order is prepared or not
-    // }
+     [HttpPost("/serve")]
+     public Task ReceivePreparedOrder([FromBody] Order order)
+     {
+         Console.WriteLine($"Restaurant prepared foods from order  {order.Id} from group order: {order.GroupOrderId}");
+         return Task.CompletedTask;
+         //todo send order to client service check if group order is prepared or not
+     }
     
     [HttpPost("/register")]
-    public void RegisterRestaurant([FromBody] RestaurantData restaurantData)
+    public Task RegisterRestaurant([FromBody] RestaurantData restaurantData)
     {
         //todo register restaurant in repository and store menus
         Console.WriteLine($"Restaurant {restaurantData.RestaurantName} registered");
+        return Task.CompletedTask;
     }
     
     //rating send from client to restaurant
     [HttpPost("/rating")]
-    public void SubmitRating([FromBody] RestaurantData restaurantData)
+    public Task SubmitRating([FromBody] RestaurantData restaurantData)
     {
         //todo register restaurant in repository and store menus
         Console.WriteLine($"Restaurant {restaurantData.RestaurantName} registered");
+        return Task.CompletedTask;
     }
     
     [HttpGet]
