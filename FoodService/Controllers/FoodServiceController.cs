@@ -11,6 +11,7 @@ public class FoodServiceController : ControllerBase
 {
     private readonly IOrderService _orderService;
     private readonly IGlovo _glovo;
+    private static Mutex _mutex = new();
 
     public FoodServiceController(IOrderService orderService, IGlovo glovo)
     {
@@ -37,12 +38,15 @@ public class FoodServiceController : ControllerBase
         var clientOrders = await _orderService.CollectClientOrders(order.Orders[0].ClientId);
         if (clientOrders != null)
         {
+            _mutex.WaitOne();
             var preparedOrder = new GroupOrder()
             {
                 Id = order.Id,
                 Orders = clientOrders,
                 ClientId = order.ClientId
             };
+            _mutex.ReleaseMutex();
+            
             await _orderService.ServePreparedOrders(preparedOrder);
             
             //Mark orders as served
@@ -53,13 +57,13 @@ public class FoodServiceController : ControllerBase
         }
     }
     
-     [HttpPost("/serve")]
-     public Task ReceivePreparedOrder([FromBody] Order order)
-     {
-         Console.WriteLine($"Restaurant prepared foods from order  {order.Id} from group order: {order.GroupOrderId}");
-         return Task.CompletedTask;
-         //todo send order to client service check if group order is prepared or not
-     }
+     // [HttpPost("/serve")]
+     // public Task ReceivePreparedOrder([FromBody] Order order)
+     // {
+     //     Console.WriteLine($"Restaurant prepared foods from order  {order.Id} from group order: {order.GroupOrderId}");
+     //     return Task.CompletedTask;
+     //     //todo send order to client service check if group order is prepared or not
+     // }
     
     [HttpPost("/register")]
     public Task RegisterRestaurant([FromBody] RestaurantData restaurantData)

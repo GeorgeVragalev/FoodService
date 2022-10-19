@@ -56,12 +56,12 @@ public class OrderService : IOrderService
             var url = Settings.Settings.ClientUrl+"/client";
             using var client = new HttpClient();
 
-            await client.PostAsync(url, data);
             PrintConsole.Write($"Group order {order.Id} with {order.Orders.Count} orders sent to client", ConsoleColor.Green);
+            await client.PostAsync(url, data);
         }
         catch (Exception e)
         {
-            PrintConsole.Write(Thread.CurrentThread.Name + " Failed to send order id: " + order.Id,
+            PrintConsole.Write(" Failed to send order id: " + order.Id,
                 ConsoleColor.DarkRed);
         }
     }

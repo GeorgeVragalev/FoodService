@@ -24,8 +24,8 @@ public class Glovo : IGlovo
                 var url = Settings.Settings.DiningHallUrl+"/sendorder";
                 using var client = new HttpClient();
 
-                await client.PostAsync(url, data);
                 PrintConsole.Write($"Group order {order.Id} sent to dining hall restaurant", ConsoleColor.Green);
+                await client.PostAsync(url, data);
             }
             catch (Exception e)
             {

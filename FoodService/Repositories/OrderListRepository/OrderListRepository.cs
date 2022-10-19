@@ -8,16 +8,21 @@ namespace FoodService.Repositories.OrderListRepository;
 public class OrderListRepository : IOrderListRepository
 {
     private readonly ConcurrentBag< Order> _orderList = new ConcurrentBag<Order>();
+    private static Mutex _mutex = new();
 
     public void AddOrderToList(Order order)
     {
+        _mutex.WaitOne();
         _orderList.Add( order);
         PrintConsole.Write($"Order {order.Id} added to list", ConsoleColor.DarkBlue);
+        _mutex.ReleaseMutex();
     }
 
     public IList<Order> GetUnservedOrders()
     {
+        _mutex.WaitOne();
         var orders = _orderList.AsQueryable().Where(o => o.OrderStatusEnum == OrderStatusEnum.Cooked).ToList();
+        _mutex.ReleaseMutex();
         return orders;
     }
 
@@ -33,16 +38,19 @@ public class OrderListRepository : IOrderListRepository
 
     public async Task MarkOrderAs(Order order, OrderStatusEnum orderStatus)
     {
+        _mutex.WaitOne();
         var orderInList = _orderList.AsQueryable().FirstOrDefault(o => o.Id == order.Id);
         if (orderInList != null) 
             orderInList.OrderStatusEnum = orderStatus;
+        _mutex.ReleaseMutex();
     }
 
     public Task<IList<Order>> CollectClientOrders(int clientId)
     {
+        _mutex.WaitOne();
         var clientsOrders = _orderList.AsQueryable()
             .Where(o => o.ClientId == clientId);
-        
+        _mutex.ReleaseMutex();
         foreach (var order in clientsOrders)
         {
             if (order.OrderStatusEnum != OrderStatusEnum.Cooked)
