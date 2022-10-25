@@ -1,4 +1,5 @@
 ﻿using FoodService.Models;
+using FoodService.Models.Enum;
 
 namespace FoodService.Services.OrderService;
 
@@ -8,5 +9,5 @@ public interface IOrderService
     public Task AddOrdersToList(GroupOrder groupOrder);
     public Task ServePreparedOrders(GroupOrder order);
     public Task MarkOrderAs(Order order, OrderStatusEnum orderStatus);
-    public Task<IList<Order>?> CollectClientOrders(int clientId);
+    public Task<IList<Order>?> CollectClientOrders(int? clientId);
 }

@@ -1,4 +1,4 @@
-﻿namespace FoodService.Models;
+﻿namespace FoodService.Models.Enum;
 
 public enum OrderStatusEnum
 {

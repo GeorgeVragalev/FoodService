@@ -1,5 +1,6 @@
 ﻿using FoodService.FoodService;
 using FoodService.Repositories.OrderListRepository;
+using FoodService.Repositories.RestaurantRepository;
 using FoodService.Services.OrderService;
 using FoodService.Services.RestaurantService;
 
@@ -17,6 +18,7 @@ public class Startup
         services.AddLogging(config => config.ClearProviders());
         
         services.AddSingleton<IOrderListRepository, OrderListRepository>();
+        services.AddSingleton<IRestaurantRepository, RestaurantRepository>();
         services.AddSingleton<IOrderService, OrderService>();
         services.AddSingleton<IRestaurantService, RestaurantService>();
         services.AddSingleton<IGlovo, Glovo>();

@@ -1,8 +1,8 @@
 ﻿using FoodService.Models;
 
-namespace FoodService.Services.RestaurantService;
+namespace FoodService.Repositories.RestaurantRepository;
 
-public interface IRestaurantService
+public interface IRestaurantRepository
 {
     public Task<IList<RestaurantData>?> GetRestaurantsData();
     public Task RegisterRestaurant(RestaurantData restaurantData);

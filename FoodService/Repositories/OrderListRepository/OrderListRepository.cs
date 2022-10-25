@@ -2,6 +2,7 @@
 using System.Linq;
 using FoodService.Helpers;
 using FoodService.Models;
+using FoodService.Models.Enum;
 
 namespace FoodService.Repositories.OrderListRepository;
 
@@ -10,12 +11,13 @@ public class OrderListRepository : IOrderListRepository
     private readonly ConcurrentBag< Order> _orderList = new ConcurrentBag<Order>();
     private static Mutex _mutex = new();
 
-    public void AddOrderToList(Order order)
+    public Task AddOrderToList(Order order)
     {
         _mutex.WaitOne();
         _orderList.Add( order);
         PrintConsole.Write($"Order {order.Id} added to list", ConsoleColor.DarkBlue);
         _mutex.ReleaseMutex();
+        return Task.CompletedTask;
     }
 
     public IList<Order> GetUnservedOrders()
@@ -36,16 +38,17 @@ public class OrderListRepository : IOrderListRepository
         return Task.CompletedTask;
     }
 
-    public async Task MarkOrderAs(Order order, OrderStatusEnum orderStatus)
+    public Task MarkOrderAs(Order order, OrderStatusEnum orderStatus)
     {
         _mutex.WaitOne();
         var orderInList = _orderList.AsQueryable().FirstOrDefault(o => o.Id == order.Id);
         if (orderInList != null) 
             orderInList.OrderStatusEnum = orderStatus;
         _mutex.ReleaseMutex();
+        return Task.CompletedTask;
     }
 
-    public Task<IList<Order>> CollectClientOrders(int clientId)
+    public Task<IList<Order>> CollectClientOrders(int? clientId)
     {
         _mutex.WaitOne();
         var clientsOrders = _orderList.AsQueryable()

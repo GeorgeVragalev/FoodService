@@ -1,12 +1,20 @@
 ﻿using System.Text;
 using FoodService.Helpers;
 using FoodService.Models;
+using FoodService.Services.RestaurantService;
 using Newtonsoft.Json;
 
 namespace FoodService.FoodService;
 
 public class Glovo : IGlovo
 {
+    private readonly IRestaurantService _restaurantService;
+
+    public Glovo(IRestaurantService restaurantService)
+    {
+        _restaurantService = restaurantService;
+    }
+
     public Task ServeOrder(GroupOrder groupOrder)
     {
         throw new NotImplementedException();
@@ -21,11 +29,15 @@ public class Glovo : IGlovo
                 var json = JsonConvert.SerializeObject(order);
                 var data = new StringContent(json, Encoding.UTF8, "application/json");
 
-                var url = Settings.Settings.DiningHallUrl+"/sendorder";
-                using var client = new HttpClient();
+                var restaurantUrl = await _restaurantService.GetRestaurantUrlById(order.RestaurantId);
+                if (restaurantUrl != null)
+                {
+                    var url = $"{restaurantUrl}/sendorder";
+                    using var client = new HttpClient();
 
-                PrintConsole.Write($"Group order {order.Id} sent to dining hall restaurant", ConsoleColor.Green);
-                await client.PostAsync(url, data);
+                    PrintConsole.Write($"Order {order.Id} sent to dining hall restaurant", ConsoleColor.Green);
+                    await client.PostAsync(url, data);
+                }
             }
             catch (Exception e)
             {

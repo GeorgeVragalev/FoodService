@@ -1,6 +1,8 @@
 ﻿using FoodService.FoodService;
 using FoodService.Models;
+using FoodService.Models.Enum;
 using FoodService.Services.OrderService;
+using FoodService.Services.RestaurantService;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FoodService.Controllers;
@@ -10,51 +12,24 @@ namespace FoodService.Controllers;
 public class FoodServiceController : ControllerBase
 {
     private readonly IOrderService _orderService;
+    private readonly IRestaurantService _restaurantService;
     private readonly IGlovo _glovo;
     private static Mutex _mutex = new();
 
-    public FoodServiceController(IOrderService orderService, IGlovo glovo)
+    public FoodServiceController(IOrderService orderService, IGlovo glovo, IRestaurantService restaurantService)
     {
         _orderService = orderService;
         _glovo = glovo;
+        _restaurantService = restaurantService;
     }
 
     [HttpPost("/order")]
     public async Task TakeOrderFromClient([FromBody] GroupOrder order)
     {
         Console.WriteLine($"Group Order {order.Id} received with {order.Orders.Count} orders from client {order.ClientId}");
-        //send order to DiningHall
-        //todo glovo send order to dedicated restaurant 
         await _orderService.AddOrdersToList(order);
         
         await _glovo.DistributeOrderToRestaurants(order);
-        
-        //prepare foods
-        foreach (var o in order.Orders)
-        {
-            await _orderService.MarkOrderAs(o, OrderStatusEnum.Cooked);
-        }
-
-        var clientOrders = await _orderService.CollectClientOrders(order.Orders[0].ClientId);
-        if (clientOrders != null)
-        {
-            _mutex.WaitOne();
-            var preparedOrder = new GroupOrder()
-            {
-                Id = order.Id,
-                Orders = clientOrders,
-                ClientId = order.ClientId
-            };
-            _mutex.ReleaseMutex();
-            
-            await _orderService.ServePreparedOrders(preparedOrder);
-            
-            //Mark orders as served
-            foreach (var o in clientOrders)
-            {
-                await _orderService.MarkOrderAs(o, OrderStatusEnum.Served);
-            }
-        }
     }
     
      // [HttpPost("/serve")]
@@ -66,11 +41,10 @@ public class FoodServiceController : ControllerBase
      // }
     
     [HttpPost("/register")]
-    public Task RegisterRestaurant([FromBody] RestaurantData restaurantData)
+    public async Task RegisterRestaurant([FromBody] RestaurantData restaurantData)
     {
-        //todo register restaurant in repository and store menus
+        await _restaurantService.RegisterRestaurant(restaurantData);
         Console.WriteLine($"Restaurant {restaurantData.RestaurantName} registered");
-        return Task.CompletedTask;
     }
     
     //rating send from client to restaurant
@@ -82,9 +56,9 @@ public class FoodServiceController : ControllerBase
         return Task.CompletedTask;
     }
     
-    [HttpGet]
-    public ContentResult Get()
+    [HttpGet("/menu")]
+    public async Task<IList<RestaurantData>?> GetRestaurantData()
     {
-        return Content("Hi");
+        return await _restaurantService.GetRestaurantsData();
     }
 }

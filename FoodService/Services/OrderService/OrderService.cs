@@ -1,6 +1,7 @@
 ﻿using System.Text;
 using FoodService.Helpers;
 using FoodService.Models;
+using FoodService.Models.Enum;
 using FoodService.Repositories.OrderListRepository;
 using FoodService.Services.RestaurantService;
 using Newtonsoft.Json;
@@ -42,7 +43,7 @@ public class OrderService : IOrderService
     {
         foreach (var order in groupOrder.Orders)
         {
-            _orderListRepository.AddOrderToList(order);
+            await _orderListRepository.AddOrderToList(order);
         }
     }
     
@@ -71,7 +72,7 @@ public class OrderService : IOrderService
         await _orderListRepository.MarkOrderAs(order, orderStatus);
     }
 
-    public async Task<IList<Order>?> CollectClientOrders(int clientId)
+    public async Task<IList<Order>?> CollectClientOrders(int? clientId)
     {
         var clientsOrders = await _orderListRepository.CollectClientOrders(clientId);
 
