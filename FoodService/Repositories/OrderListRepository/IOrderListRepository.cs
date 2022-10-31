@@ -10,5 +10,5 @@ public interface IOrderListRepository
     public IList<Order> GetUnservedOrders();
     public Task CleanServedOrders();
     public Task MarkOrderAs(Order order, OrderStatusEnum orderStatus);
-    public Task<IList<Order>> CollectClientOrders(int? clientId);
+    public Task<GroupOrder> CollectClientOrders(int clientId);
 }

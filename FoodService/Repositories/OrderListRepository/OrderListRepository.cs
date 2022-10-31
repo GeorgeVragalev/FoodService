@@ -8,13 +8,13 @@ namespace FoodService.Repositories.OrderListRepository;
 
 public class OrderListRepository : IOrderListRepository
 {
-    private readonly ConcurrentBag< Order> _orderList = new ConcurrentBag<Order>();
+    private readonly ConcurrentBag<Order> _orderList = new ConcurrentBag<Order>();
     private static Mutex _mutex = new();
 
     public Task AddOrderToList(Order order)
     {
         _mutex.WaitOne();
-        _orderList.Add( order);
+        _orderList.Add(order);
         PrintConsole.Write($"Order {order.Id} added to list", ConsoleColor.DarkBlue);
         _mutex.ReleaseMutex();
         return Task.CompletedTask;
@@ -35,33 +35,54 @@ public class OrderListRepository : IOrderListRepository
         {
             orders.Clear();
         }
+
         return Task.CompletedTask;
     }
 
     public Task MarkOrderAs(Order order, OrderStatusEnum orderStatus)
     {
         _mutex.WaitOne();
-        var orderInList = _orderList.AsQueryable().FirstOrDefault(o => o.Id == order.Id);
-        if (orderInList != null) 
+        var orderInList = _orderList.AsQueryable().FirstOrDefault(o => o.ClientId == order.ClientId);
+        if (orderInList != null)
             orderInList.OrderStatusEnum = orderStatus;
         _mutex.ReleaseMutex();
         return Task.CompletedTask;
     }
 
-    public Task<IList<Order>> CollectClientOrders(int? clientId)
+    public Task<GroupOrder> CollectClientOrders(int clientId)
     {
         _mutex.WaitOne();
         var clientsOrders = _orderList.AsQueryable()
-            .Where(o => o.ClientId == clientId);
+            .Where(o => o.ClientId == clientId)
+            .ToList();
         _mutex.ReleaseMutex();
+
         foreach (var order in clientsOrders)
         {
             if (order.OrderStatusEnum != OrderStatusEnum.Cooked)
             {
-                return Task.FromResult<IList<Order>>(null);
+                return null;
             }
         }
-        
-        return Task.FromResult<IList<Order>>(clientsOrders.ToList());
+
+        if (clientsOrders.Count > 0)
+        {
+            _mutex.WaitOne();
+            var groupOrderId = clientsOrders[0].GroupOrderId;
+            if (groupOrderId != null)
+            {
+                var groupOrder = new GroupOrder()
+                {
+                    Id = groupOrderId.Value,
+                    Orders = clientsOrders,
+                    ClientId = clientId
+                };
+                _mutex.ReleaseMutex();
+                return Task.FromResult(groupOrder);
+            }
+            _mutex.ReleaseMutex();
+        }
+
+        return null;
     }
 }

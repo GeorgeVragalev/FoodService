@@ -19,7 +19,7 @@ public class OrderService : IOrderService
         _orderListRepository = orderListRepository;
     }
 
-    public async Task SendOrder(GroupOrder order)
+    public async Task SendOrder(GroupOrder? order)
     {
         try
         {
@@ -72,15 +72,8 @@ public class OrderService : IOrderService
         await _orderListRepository.MarkOrderAs(order, orderStatus);
     }
 
-    public async Task<IList<Order>?> CollectClientOrders(int? clientId)
+    public async Task<GroupOrder?> CollectClientOrders(int clientId)
     {
-        var clientsOrders = await _orderListRepository.CollectClientOrders(clientId);
-
-        if (clientsOrders == null)
-        {
-            return null;
-        }
-
-        return clientsOrders;
+        return await _orderListRepository.CollectClientOrders(clientId);
     }
 }

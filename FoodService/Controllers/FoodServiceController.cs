@@ -32,13 +32,24 @@ public class FoodServiceController : ControllerBase
         await _glovo.DistributeOrderToRestaurants(order);
     }
     
-     // [HttpPost("/serve")]
-     // public Task ReceivePreparedOrder([FromBody] Order order)
-     // {
-     //     Console.WriteLine($"Restaurant prepared foods from order  {order.Id} from group order: {order.GroupOrderId}");
-     //     return Task.CompletedTask;
-     //     //todo send order to client service check if group order is prepared or not
-     // }
+     [HttpPost("/serve")]
+     public async Task ReceivePreparedOrder([FromBody] Order order)
+     {
+         Console.WriteLine($"Restaurant prepared foods from order {order.Id} from group order: {order.GroupOrderId}");
+         
+         //check if order is complete
+         await _orderService.MarkOrderAs(order, OrderStatusEnum.Cooked);
+
+         if (order.ClientId != null)
+         {
+             var groupOrder = await _orderService.CollectClientOrders(order.ClientId.Value);
+
+             if (groupOrder!= null)
+             {
+                 await _orderService.ServePreparedOrders(groupOrder);
+             }
+         }
+     }
     
     [HttpPost("/register")]
     public async Task RegisterRestaurant([FromBody] RestaurantData restaurantData)
@@ -47,13 +58,11 @@ public class FoodServiceController : ControllerBase
         Console.WriteLine($"Restaurant {restaurantData.RestaurantName} registered");
     }
     
-    //rating send from client to restaurant
     [HttpPost("/rating")]
-    public Task SubmitRating([FromBody] RestaurantData restaurantData)
+    public async Task SubmitRating([FromBody] OrderRating orderRating)
     {
-        //todo register restaurant in repository and store menus
-        Console.WriteLine($"Restaurant {restaurantData.RestaurantName} registered");
-        return Task.CompletedTask;
+        var resturantUrl = await _restaurantService.GetRestaurantUrlById(orderRating.Order.RestaurantId);
+        await _restaurantService.SubmitRating(orderRating, $"{resturantUrl}/rating");
     }
     
     [HttpGet("/menu")]
